@@ -2,6 +2,7 @@ package api
 
 import (
 	vault "github.com/hashicorp/vault/api"
+	"log"
 )
 
 type Vault struct {
@@ -59,10 +60,118 @@ func (recierver Vault) ReadDataFromSecret(pathToSecret, field string) (map[strin
 	}
 	return data, nil
 }
-func (recierver Vault) CreatePolicy() (bool, error) {
-	_, err := recierver.setup()
+
+func (recierver Vault) CreateSecretsEngie(path string, data map[string]interface{}) (bool, error) {
+	client, err := recierver.setup()
 	if err != nil {
 		return false, &SpecialError{mess: err.Error()}
 	}
-	return false, nil
+	_, err = client.Logical().Write(path, data)
+	if err != nil {
+		return false, &SpecialError{mess: err.Error()}
+	}
+	return true, nil
+}
+func (recierver Vault) WriteDatabaseConfig(path string, data map[string]interface{}) (bool, error) {
+	client, err := recierver.setup()
+	if err != nil {
+		return false, &SpecialError{mess: err.Error()}
+	}
+	_, err = client.Logical().Write(path, data)
+	if err != nil {
+		return false, &SpecialError{mess: err.Error()}
+	}
+	return true, nil
+}
+func (recierver Vault) ListConfig(path string) (map[string]interface{}, error) {
+	client, err := recierver.setup()
+	if err != nil {
+		return nil, &SpecialError{mess: err.Error()}
+	}
+	list, err := client.Logical().List(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return list.Data, nil
+}
+func (recierver Vault) RotateRoot(path string) (bool, error) {
+	client, err := recierver.setup()
+	if err != nil {
+		return false, &SpecialError{mess: err.Error()}
+	}
+	_, err = client.Logical().Write(path, nil)
+	if err != nil {
+		return false, &SpecialError{mess: err.Error()}
+	}
+	return true, nil
+}
+
+func (recierver Vault) CreateStaticRole(path string, data map[string]interface{}) (bool, error) {
+	client, err := recierver.setup()
+	if err != nil {
+		return false, &SpecialError{mess: err.Error()}
+	}
+	_, err = client.Logical().Write(path, data)
+	if err != nil {
+		return false, &SpecialError{mess: err.Error()}
+	}
+	return true, nil
+}
+func (recierver Vault) ReadStaticRole(path string) (interface{}, error) {
+	client, err := recierver.setup()
+	if err != nil {
+		return nil, &SpecialError{mess: err.Error()}
+	}
+	res, err := client.Logical().Read(path)
+	if err != nil {
+		return nil, &SpecialError{mess: err.Error()}
+	}
+	return res, nil
+}
+func (recierver Vault) CreatePolicy(path string, data map[string]interface{}) (bool, error) {
+	client, err := recierver.setup()
+	if err != nil {
+		return false, &SpecialError{mess: err.Error()}
+	}
+	res, err := client.Logical().Write(path, data)
+	if err != nil {
+		return false, &SpecialError{mess: err.Error()}
+	}
+	log.Printf("Data from request %s", res)
+	return true, nil
+}
+func (recierver Vault) CreateRotateToken(path string, data map[string]interface{}) (string, error) {
+	client, err := recierver.setup()
+	if err != nil {
+		return "", &SpecialError{mess: err.Error()}
+	}
+	result, err := client.Logical().Write(path, data)
+	if err != nil {
+		return "", &SpecialError{mess: err.Error()}
+	}
+	return result.Auth.ClientToken, nil
+}
+func (recierver Vault) EndpointRotateRoleByAdmin(path string) (bool, error) {
+	client, err := recierver.setup()
+	if err != nil {
+		return false, &SpecialError{mess: err.Error()}
+	}
+	_, err = client.Logical().Write(path, nil)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+func (recierver Vault) RotateTokenByAdmin(path, token string) (map[string]interface{}, error) {
+	client, err := recierver.setup()
+	if err != nil {
+		return nil, &SpecialError{mess: err.Error()}
+	}
+	client.SetToken(token)
+	res, err := client.Logical().Read(path)
+	if err != nil {
+		return nil, &SpecialError{mess: err.Error()}
+	}
+	return res.Data, nil
 }

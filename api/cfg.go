@@ -1,9 +1,12 @@
 package api
 
+// enable secrets with http api,  under path :sys/mount/your secrtes
+//https://www.vaultproject.io/api-docs/system/mounts#enable-secrets-engine
 const (
-	Address               = "http://127.0.0.1:8200"
-	Token                 = "hvs.iUeLC47BGapeXFXSw98yEP1y"
-	PathSecrets           = "secret/data/mydata"
+	Address = "https://localhost:9200"
+	Token   = "hvs.qYpjtjWtaTEu3dsYFZF7fFoP"
+	//Todo Path to enable
+	PathSecrets           = "sys/mounts/vaultkv" //to enbale
 	PathPolicy            = "sys/policies/acl/apps"
 	PathCreateToken       = "/auth/token/create"
 	PathReCreateToken     = "/database/rotate-role/education"
@@ -18,6 +21,9 @@ const (
 
 	PathRoot   = "/database/rotate-root/postgresql"
 	PathStatic = "/database/static-roles/education"
+
+	// Todo Get data from path
+	PathKvData = "vaultkv/data/user"
 )
 
 var (
@@ -33,6 +39,12 @@ var (
 	// valueDB := map[string]interface{}{
 	// 	"type": "database",
 	// }
+	valTransit = map[string]interface{}{
+		"type": "transit",
+	}
+	ValKv = map[string]interface{}{
+		"type": "kv-v2",
+	}
 	// Todo: here is config static role
 	vale       = "[ALTER USER \"{{name}}\" WITH PASSWORD '{{password}}';],"
 	StaticRole = map[string]interface{}{

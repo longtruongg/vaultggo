@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"main/api"
+	"main/models"
 )
 
 func main() {
@@ -11,41 +13,24 @@ func main() {
 	if err != nil {
 		log.Printf("Vault init %s", err)
 	}
-	secretData := map[string]interface{}{
-		"data": map[string]interface{}{
-			"password": "1234",
-		},
-	}
 
-	requestID, err := vault.WriteDataToSecret(api.PathSecrets, secretData)
-	if err != nil {
-		log.Printf("WriteData %s", err)
-	}
-	log.Printf("RequestID %s", requestID)
-	// read data
+	// err = vault.WriteDataToSecret(api.PathSecrets, api.ValKv)
+	// if err != nil {
+	// 	log.Printf("WriteData %s", err)
+	// }
 
-	data, err := vault.ReadDataFromSecret(api.PathSecrets, "")
+	data, err := vault.ReadDataFromSecret(api.PathKvData, "")
 	if err != nil {
 		log.Printf("ReadData %s", err)
 	}
-	log.Printf("Data from Secrets %s", data)
-	result, err := vault.ReadStaticRole(api.PathStatic)
-	log.Printf("Data Role %s", result)
-	log.Println("--------------------------------------------------")
-	tok, err := vault.CreateRotateToken(api.PathCreateToken, api.ValToken)
+	jsonData, err := json.Marshal(data)
+
 	if err != nil {
-		log.Printf("Error %s", err)
+		log.Printf("Data error %s", err)
 	}
-	log.Printf("Token is :: %s", tok)
-	result, err = vault.EndpointRotateRoleByAdmin(api.PathReCreateToken)
+	kv, err := models.UnmarshalKv(jsonData)
 	if err != nil {
-		log.Printf("Error from Endpoint %s", err)
+		log.Printf("Unmarshal %s", err)
 	}
-	log.Printf("Isok? %s", result)
-	log.Println("--------------------------------------------------")
-	reTok, err := vault.RotateTokenByAdmin(api.PathRotateTokenByRoot, api.Token)
-	if err != nil {
-		log.Printf("RotateToken %s", err)
-	}
-	log.Printf("RecreateToken :: %s", reTok)
+	log.Printf("Kv %v", kv.Key)
 }

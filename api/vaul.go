@@ -1,8 +1,9 @@
 package api
 
 import (
-	vault "github.com/hashicorp/vault/api"
 	"log"
+
+	vault "github.com/hashicorp/vault/api"
 )
 
 type Vault struct {
@@ -24,26 +25,34 @@ func NewVaultToken(address, token string) (*Vault, error) {
 	}
 	return v, nil
 }
-func (recierver Vault) setup() (*vault.Client, error) {
-	vaultConfig := vault.DefaultConfig()
-	vaultConfig.Address = recierver.address
-	client, err := vault.NewClient(vaultConfig)
+func (recierver *Vault) setup() (*vault.Client, error) {
+	client, err := InitVaultClient()
 	if err != nil {
-		return nil, &SpecialError{mess: err.Error()}
+		return nil, err
 	}
-	client.SetToken(recierver.token)
-	return client, nil
+	vaultConfig := vault.Config{
+		Address:    recierver.address,
+		HttpClient: client,
+	}
+	vaultClient, err := vault.NewClient(
+		&vaultConfig,
+	)
+	vaultClient.SetToken(recierver.token)
+	if err != nil {
+		return nil, err
+	}
+	return vaultClient, nil
 }
-func (recierver Vault) WriteDataToSecret(pathSecret string, data map[string]interface{}) (string, error) {
+func (recierver *Vault) WriteDataToSecret(pathSecret string, data map[string]interface{}) error {
 	client, err := recierver.setup()
 	if err != nil {
-		return "", &SpecialError{mess: err.Error()}
+		return &SpecialError{mess: err.Error()}
 	}
-	writeData, err := client.Logical().Write(pathSecret, data)
+	_, err = client.Logical().Write(pathSecret, data)
 	if err != nil {
-		return "", &SpecialError{mess: err.Error()}
+		return &SpecialError{mess: err.Error()}
 	}
-	return writeData.RequestID, nil
+	return nil
 }
 func (recierver Vault) ReadDataFromSecret(pathToSecret, field string) (map[string]interface{}, error) {
 	client, err := recierver.setup()
